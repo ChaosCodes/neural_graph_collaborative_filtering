@@ -147,7 +147,7 @@ class NGCF(object):
                 initializer([1, self.weight_size_list[k]]), name='b_attention_%d' % k)
 
             all_weights['W_attention_h_%d' % k] = tf.Variable(
-                initializer([self.n_items + self.n_users, self.n_items + self.n_users), name='W_attention_h_%d' % k)
+                initializer([self.n_items + self.n_users, self.n_items + self.n_users]), name='W_attention_h_%d' % k)
 
         return all_weights
 
