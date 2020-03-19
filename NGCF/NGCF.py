@@ -206,7 +206,7 @@ class NGCF(object):
             # attention 
             attention = tf.nn.leaky_relu(
                 (tf.matmul(ego_embeddings, self.weights['W_attention_%d' % k]) + self.weights['b_attention_%d' % k]))
-            attention = tf.nn.softmax(tf.matmul(attention, self.weights['W_attention_h_%d' % k], axis=-1))
+            attention = tf.nn.softmax(tf.matmul(attention, self.weights['W_attention_h_%d' % k]), axis=-1)
 
             # transformed sum messages of neighbors.
             sum_embeddings = tf.nn.leaky_relu(
