@@ -142,12 +142,12 @@ class NGCF(object):
                 initializer([1, self.weight_size_list[k + 1]]), name='b_bi_%d' % k)
 
             all_weights['W_attention_%d' % k] = tf.Variable(
-                initializer([self.weight_size_list[k], self.n_items + self.n_users]), name='W_attention_%d' % k)
+                initializer([self.weight_size_list[k], self.weight_size_list[k]]), name='W_attention_%d' % k)
             all_weights['b_attention_%d' % k] = tf.Variable(
-                initializer([1, self.n_items + self.n_users]), name='b_attention_%d' % k)
+                initializer([1, self.weight_size_list[k]]), name='b_attention_%d' % k)
 
             all_weights['W_attention_h_%d' % k] = tf.Variable(
-                initializer([self.n_items + self.n_users, self.n_items + self.n_users]), name='W_attention_h_%d' % k)
+                initializer([self.weight_size_list[k], self.weight_size_list[k]), name='W_attention_h_%d' % k)
 
         return all_weights
 
@@ -223,7 +223,7 @@ class NGCF(object):
 
             # message dropout.
             norm_embeddings = tf.nn.dropout(ego_embeddings, 1 - self.mess_dropout[k])
-            norm_embeddings = tf.matmul(attention, norm_embeddings)
+            norm_embeddings = tf.multiply(attention, norm_embeddings)
             # normalize the distribution of embeddings.
             norm_embeddings = tf.math.l2_normalize(ego_embeddings, axis=1)
 
