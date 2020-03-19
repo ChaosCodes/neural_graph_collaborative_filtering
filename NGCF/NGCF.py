@@ -50,6 +50,7 @@ class NGCF(object):
         Create Placeholder for Input Data & Dropout.
         '''
         # placeholder definition
+        # pairwise train （user, positive items, negetive items)
         self.users = tf.placeholder(tf.int32, shape=(None,))
         self.pos_items = tf.placeholder(tf.int32, shape=(None,))
         self.neg_items = tf.placeholder(tf.int32, shape=(None,))
@@ -140,10 +141,13 @@ class NGCF(object):
             all_weights['b_bi_%d' % k] = tf.Variable(
                 initializer([1, self.weight_size_list[k + 1]]), name='b_bi_%d' % k)
 
-            all_weights['W_mlp_%d' % k] = tf.Variable(
-                initializer([self.weight_size_list[k], self.weight_size_list[k+1]]), name='W_mlp_%d' % k)
-            all_weights['b_mlp_%d' % k] = tf.Variable(
-                initializer([1, self.weight_size_list[k+1]]), name='b_mlp_%d' % k)
+            all_weights['W_attention_%d' % k] = tf.Variable(
+                initializer([self.n_items + self.n_users, self.weight_size_list[k]]), name='W_attention_%d' % k)
+            all_weights['b_attention_%d' % k] = tf.Variable(
+                initializer([1, self.weight_size_list[k]]), name='b_attention_%d' % k)
+
+            all_weights['W_attention_h_%d' % k] = tf.Variable(
+                initializer([self.n_items + self.n_users, self.n_items + self.n_users), name='W_attention_h_%d' % k)
 
         return all_weights
 
@@ -199,6 +203,11 @@ class NGCF(object):
 
             # sum messages of neighbors.
             side_embeddings = tf.concat(temp_embed, 0)
+            # attention 
+            attention = tf.nn.leaky_relu(
+                (tf.matmul(ego_embeddings, self.weights['W_attention_%d' % k]) + self.weights['b_attention_%d' % k]))
+            attention = tf.nn.softmax(tf.matmul(attention, self.weights['W_attention_h_%d' % k]))
+
             # transformed sum messages of neighbors.
             sum_embeddings = tf.nn.leaky_relu(
                 tf.matmul(side_embeddings, self.weights['W_gc_%d' % k]) + self.weights['b_gc_%d' % k])
@@ -213,8 +222,8 @@ class NGCF(object):
             ego_embeddings = sum_embeddings + bi_embeddings
 
             # message dropout.
-            ego_embeddings = tf.nn.dropout(ego_embeddings, 1 - self.mess_dropout[k])
-
+            norm_embeddings = tf.nn.dropout(ego_embeddings, 1 - self.mess_dropout[k])
+            norm_embeddings = tf.matmul(attention, norm_embeddings)
             # normalize the distribution of embeddings.
             norm_embeddings = tf.math.l2_normalize(ego_embeddings, axis=1)
 
